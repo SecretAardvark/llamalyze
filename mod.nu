@@ -21,7 +21,7 @@ let tvl_data = tvl chainHistorical $crypto | last 30
         symbol: (coins currentPrices $crypto | values | first  |  values | get symbol | first),
         current_price:  (coins currentPrices $crypto | values | first  |  values | get price | first),
         percentage_change: (coins percentage $crypto | values | first  |  values | first),
-        historical_tvl: (tvl chainHistorical $crypto | last 30),
+        historical_tvl: (tvl chainHistorical $crypto | last 10),
         current_tvl: (tvl chainHistorical $crypto | last | get tvl),
         volume: {24h: $volume_data.total24h, 7d: $volume_data.total7d, 30d: $volume_data.total30d},
         volume_change: {24h: $volume_data.change_1d, 7d: $volume_data.change_7d, 30d: $volume_data.change_1m}
@@ -35,12 +35,9 @@ let tvl_data = tvl chainHistorical $crypto | last 30
         historical_stableMcap: (stablecoins chainHistory $crypto 1 | last 10 
                                 |get totalMintedUsd |get peggedUSD),
         stablecoinMcap: (stablecoins chainHistory $crypto 1 | last | get totalMintedUsd |get peggedUSD)
+        volume: {24h: $volume_data.total24h, 7d: $volume_data.total7d, 30d: $volume_data.total30d}
     }
 }
-# useful flow for comparing chains: [$sol, $eth] | fabric summarize | dont-think | glow
-#TODO: make getChain work with bitcoin (errors getting stablecoin mcap)
-#TODO: Write a custom fabric prompt. Summarize is already fairly good. 
-
 
 #TODO: https://stablecoins.llama.fi/stablecoins?includePrices=true I didn't include this endpoint in nuLlama/stablecoins,
 #    but it might be what i need for the current stablecoin mcap 
