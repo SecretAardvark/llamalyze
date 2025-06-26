@@ -1,4 +1,3 @@
-
 # VictorMono NF, Bold Italic
 #EnvyCoderR Nerd Font Mono, Bold
 use ../nuLlama/coins
@@ -6,10 +5,46 @@ use ../nuLlama/tvl
 use ../nuLlama/volumes
 use ../nuLlama/stablecoins
 
-export def main [crypto: string] { 
-    print "Oh hi mark!"
-    getChain  $crypto
+export def analyze [crypto?: string] { 
+    #multi-chain flow
+    if ($crypto | is-empty) {
+        let chains = [
+        "ethereum",
+        "solana",
+        #"avax",
+        "base",
+        "arbitrum",
+        #"optimism",
+       # "zksync",
+        "tron",
+        "near",
+    ]
+    let chain_data = $chains | par-each {|chain|
+        getChain $chain
+    }
+    print $chain_data
+    print "analyzing chain data..."
+    $chain_data | to json | fabric analyze_crypto | dont-think | glow
+    } else {
+        #single crypto flow
+        if ($crypto == "ethereum") {
+            let chains = [
+                "ethereum",
+                "arbitrum",
+                "base",
+            ]
+            let chain_data = $chains | par-each {|chain|
+                getChain $chain
+            }
+            print $chain_data
+            print "analyzing chain data..."
+            $chain_data | to json | fabric analyze_crypto | dont-think | glow
+        } else {
+            getChain $crypto | to json | fabric analyze_crypto | dont-think | glow
+        }
+    }
 }
+
 
 export def getChain [crypto: string] { 
    
@@ -21,10 +56,6 @@ let tvl_data = tvl chainHistorical $crypto | last 30
         symbol: (coins currentPrices $crypto | values | first  |  values | get symbol | first),
         current_price:  (coins currentPrices $crypto | values | first  |  values | get price | first),
         percentage_change: (coins percentage $crypto | values | first  |  values | first),
-        historical_tvl: (tvl chainHistorical $crypto | last 10),
-        current_tvl: (tvl chainHistorical $crypto | last | get tvl),
-        volume: {24h: $volume_data.total24h, 7d: $volume_data.total7d, 30d: $volume_data.total30d},
-        volume_change: {24h: $volume_data.change_1d, 7d: $volume_data.change_7d, 30d: $volume_data.change_1m}
         historical_tvl: $tvl_data,
         current_tvl: ($tvl_data | last | get tvl),
         volume: {24h: $volume_data.total24h, 7d: $volume_data.total7d, 30d: $volume_data.total30d},
@@ -35,27 +66,13 @@ let tvl_data = tvl chainHistorical $crypto | last 30
         historical_stableMcap: (stablecoins chainHistory $crypto 1 | last 10 
                                 |get totalMintedUsd |get peggedUSD),
         stablecoinMcap: (stablecoins chainHistory $crypto 1 | last | get totalMintedUsd |get peggedUSD)
-        volume: {24h: $volume_data.total24h, 7d: $volume_data.total7d, 30d: $volume_data.total30d}
     }
 }
 
 #TODO: https://stablecoins.llama.fi/stablecoins?includePrices=true I didn't include this endpoint in nuLlama/stablecoins,
 #    but it might be what i need for the current stablecoin mcap 
+#TODO: if analyzing 'ethereum' it might be prudent to include l2 data as well. 
 
-# chain struct { 
-#     name: string x 
-#     symbol: string
-#     address: string
-#     tvl : float x 
-#     volume : float x 
-#     fees : float x 
-#     stablecoins : float x   
-#     tvl_change : float x 
-#     volume_change : float x
-#     fees_change : float x
-#     logo: string x 
-#     current_price: float x 
-#     percentage_change: float x 
-# }
+
 
  
