@@ -6,25 +6,43 @@ use ../nuLlama/volumes
 use ../nuLlama/stablecoins
 
 export def analyze [crypto?: string] { 
+    open ("~/dev/nushell/llamalyze/.env" | path expand) | from toml | load-env
+    let today = (date now | format date "%m-%d-%Y")
+    let vault_path =  if ($"($env.VAULT_PATH)/($today)/" | path exists) {
+        $"($env.VAULT_PATH)/($today)/"
+    } else {
+        mkdir $"($env.VAULT_PATH)/($today)"
+        $"($env.VAULT_PATH)/($today)"
+    }
     #multi-chain flow
     if ($crypto | is-empty) {
         let chains = [
         "ethereum",
         "solana",
-        #"avax",
+       # "avalanche-2",
         "base",
         "arbitrum",
         #"optimism",
        # "zksync",
         "tron",
+        #"the-open-network",
         "near",
+        #"sonic-3",
+        #"unichain",
+        #"osmosis", <- this one doesnt have a totalusd for some reason, will probably work otherwise.
+       # "aurora-near",
+        #"cardano",
     ]
+    let fear_and_greed = http get https://api.alternative.me/fng/?limit=1 
     let chain_data = $chains | par-each {|chain|
         getChain $chain
     }
-    print $chain_data
+    let payload = {
+        chain_data: $chain_data,
+        fear_and_greed: {value: $fear_and_greed.data.value, rating: $fear_and_greed.data.value_classification}
+    }
     print "analyzing chain data..."
-    $chain_data | to json | fabric analyze_crypto | dont-think | glow
+    $payload | to json | fabric analyze_crypto | dont-think | save -f $"($vault_path)Crypto Market Onchain Overview-(date now | format date "%m-%d-%Y").md" | glow
     } else {
         #single crypto flow
         if ($crypto == "ethereum") {
@@ -36,11 +54,12 @@ export def analyze [crypto?: string] {
             let chain_data = $chains | par-each {|chain|
                 getChain $chain
             }
-            print $chain_data
-            print "analyzing chain data..."
-            $chain_data | to json | fabric analyze_crypto | dont-think | glow
+            #print $chain_data
+            #print "analyzing chain data..."
+            #print ( $"($vault_path)($crypto | str capitalize) Onchain Overview-(date now | format date "%m-%d-%Y").md" | path exists)
+            $chain_data | to json | fabric analyze_crypto | dont-think | save -f $"($vault_path)($crypto | str capitalize) Onchain Overview-(date now | format date "%m-%d-%Y").md" | cd $"($vault_path)" | glow
         } else {
-            getChain $crypto | to json | fabric analyze_crypto | dont-think | glow
+            getChain $crypto | to json | fabric analyze_crypto | dont-think | save -f $"($vault_path)($crypto | str capitalize) Onchain Overview-(date now | format date "%m-%d-%Y").md" | cd $"($vault_path)"       
         }
     }
 }
@@ -76,3 +95,5 @@ let tvl_data = tvl chainHistorical $crypto | last 30
 
 
 
+#TODO: add more chains, figure out why the coingecko api is not working for some chains.
+#TODO: figure out why osmosis is a special snowflake
