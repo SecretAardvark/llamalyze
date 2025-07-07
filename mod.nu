@@ -53,26 +53,26 @@ let fee_data = http get $"https://api.llama.fi/overview/fees/($crypto)" | select
 let tvl_data = tvl chainHistorical $crypto | last 30
 {
         name: $crypto, 
-        symbol: (coins currentPrices $crypto | values | first  |  values | get symbol | first),
+        symbol: (
+            (coins currentPrices $crypto | values | first | values | get symbol | first) | default ""
+        ),
         current_price:  (coins currentPrices $crypto | values | first  |  values | get price | first),
         percentage_change: (coins percentage $crypto | values | first  |  values | first),
         historical_tvl: $tvl_data,
         current_tvl: ($tvl_data | last | get tvl),
-        volume: {24h: $volume_data.total24h, 7d: $volume_data.total7d, 30d: $volume_data.total30d},
-        volume_change: {24h: $volume_data.change_1d, 7d: $volume_data.change_7d, 30d: $volume_data.change_1m},
+        volume: {24h: $volume_data.total24h, 7d: $volume_data.total7d, 30d: $volume_data.total30d}, volume_change: {24h: $volume_data.change_1d, 7d: $volume_data.change_7d, 30d: $volume_data.change_1m},
         fees: {24h: $fee_data.total24h, 7d: $fee_data.total7d, 30d: $fee_data.total30d},
         fees_change: {24h: $fee_data.change_1d, 7d: $fee_data.change_7d, 30d: $fee_data.change_1m},
-        #This is just tether mcap for now, not total. 
+        
         historical_stableMcap: (stablecoins chainHistory $crypto 1 | last 10 
-                                |get totalMintedUsd |get peggedUSD),
-        stablecoinMcap: (stablecoins chainHistory $crypto 1 | last | get totalMintedUsd |get peggedUSD)
+                                | get totalMintedUsd |get peggedUSD),
+        stablecoinMcap: (stablecoins all | get chains | where gecko_id == $crypto | get totalCirculatingUSD | get peggedUSD)
     }
 }
 
-#TODO: https://stablecoins.llama.fi/stablecoins?includePrices=true I didn't include this endpoint in nuLlama/stablecoins,
-#    but it might be what i need for the current stablecoin mcap 
-#TODO: if analyzing 'ethereum' it might be prudent to include l2 data as well. 
 
 
 
- 
+
+
+

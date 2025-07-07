@@ -15,7 +15,7 @@ You will receive one or more JSON‐style data structures containing:
 - Fees & fees_change (24h, 7d, 30d)
 - Stablecoin market cap series
 - Any additional on-chain or off-chain metrics
-
+*IMPORTANT NOTE:* If Asked to analyze Ethereum, analyze the ethereum l1 and top a few of the top l2's (Base, Arbitrum etc) as a whole
 ---
 
 ## STEPS
